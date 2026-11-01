@@ -45,7 +45,8 @@ static Result<matjson::Value> parseConfigFile(const std::string& data) {
 static matjson::Value loadOrCreateConfig() {
     matjson::Value data;
 
-    if (asp::fs::isFile(storagePath)) {
+    auto storagePathMeta = asp::fs::metadata(storagePath);
+    if (storagePathMeta && storagePathMeta.unwrap().isFile()) {
         auto res = geode::utils::file::readString(storagePath);
         if (!res) {
             log::warn("(Argon) failed to read argon data file: {}", res.unwrapErr());

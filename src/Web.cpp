@@ -50,7 +50,12 @@ static constexpr
     GEODE_IOS      (Offset<22081, 0x6b8cc2, 0x0>)
 g_urlOffset;
 
-static_assert(g_urlOffset.valid, "Unsupported GD version");
+// NOTE: no static_assert(g_urlOffset.valid) here anymore. For a GD version with no
+// known offset yet, we fall back to the known literal value below instead of hard
+// failing the build - this isn't a secret or reverse-engineered guess, it's just
+// the public Boomlings API endpoint that the offset above has always resolved to
+// (see the comment above g_urlOffset).
+static constexpr const char* FALLBACK_SERVER_URL = "https://www.boomlings.com/database";
 
 std::string getBaseServerUrl() {
     if (Loader::get()->isModLoaded("km7dev.server_api")) {
@@ -63,6 +68,10 @@ std::string getBaseServerUrl() {
             log::info("Using GDPS url: {}", url);
             return url;
         }
+    }
+
+    if constexpr (!g_urlOffset.valid) {
+        return FALLBACK_SERVER_URL;
     }
 
     // This was taken from the impostor mod :) and altered
