@@ -6,7 +6,18 @@
 #endif
 #include <Geode/loader/Mod.hpp>
 #include <asp/iter.hpp>
+#include <Geode/loader/Dispatch.hpp>
+
+// external/ServerAPIEvents.hpp (vendored from AlphiiGD/server-api) uses the
+// GEODE_EVENT_EXPORT_NORES macro family, which Geode removed (see geode-sdk/geode
+// commit "remove nores macros"). Neither argon nor server-api have been updated for
+// the new GEODE_EVENT_EXPORT API yet, so skip this optional GDPS-switcher interop
+// entirely when building against a Geode version that doesn't have the macro,
+// rather than guessing at a rewrite of a still-churning Geode internal.
+#ifdef GEODE_EVENT_EXPORT_NORES
 #include "external/ServerAPIEvents.hpp"
+#define ARGON_HAS_SERVER_API_EVENTS 1
+#endif
 
 using namespace arc;
 
@@ -58,6 +69,7 @@ g_urlOffset;
 static constexpr const char* FALLBACK_SERVER_URL = "https://www.boomlings.com/database";
 
 std::string getBaseServerUrl() {
+#ifdef ARGON_HAS_SERVER_API_EVENTS
     if (Loader::get()->isModLoaded("km7dev.server_api")) {
         auto url = ServerAPIEvents::getCurrentServer().url;
         if (!url.empty() && url != "NONE_REGISTERED") {
@@ -69,6 +81,7 @@ std::string getBaseServerUrl() {
             return url;
         }
     }
+#endif
 
     if constexpr (!g_urlOffset.valid) {
         return FALLBACK_SERVER_URL;
